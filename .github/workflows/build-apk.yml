@@ -14,22 +14,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Convert to Android and Build APK
+        run: |
+          mkdir -p www
+          find . -maxdepth 1 -not -name 'www' -not -name '.git' -not -name '.github' -not -name '.' -exec cp -r {} www/ \;
+          
+          # ఒకవేళ index.html వేరే పేరుతో ఉంటే దాన్ని index.html గా మారుస్తుంది
+          if [ ! -f "www/index.html" ]; then
+            FIRST_HTML=$(find www -maxdepth 1 -name "*.html" | head -n 1)
+            if [ -n "$FIRST_HTML" ]; then
+              cp "$FIRST_HTML" www/index.html
+            else
+              echo "<h1>Cube App</h1>" > www/index.html
+            fi
+          fi
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+          rm -f package.json package-lock.json
+          npm init -y
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npx cap init Cube com.sairam.cube --web-dir www
+          npx cap add android
+          
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Cube-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           
