@@ -1,37 +1,592 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>3D Cube Lab</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f2f6fc;color:#172b4d;font:15px system-ui,Arial}header{padding:15px;background:#132b49;color:#fff;font-size:22px;font-weight:800}header small{display:block;font-size:12px;font-weight:400;color:#c8dcf4;margin-top:3px}.wrap{padding:12px;max-width:850px;margin:auto}.panel{background:white;border:1px solid #d5e0ee;border-radius:14px;padding:13px;margin-bottom:12px;box-shadow:0 2px 8px #19365a0b}.scene{height:300px;background:radial-gradient(#fff,#e7eff9);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}.cube{width:160px;height:160px;position:relative;transform-style:preserve-3d;transform:rotateX(-25deg) rotateY(-35deg);transition:transform .25s}.face{position:absolute;display:grid;width:160px;height:160px;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);backface-visibility:visible}.tile{border:1px solid #334155;min-width:0;min-height:0}.tile:active{filter:brightness(1.2)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}button,select{border:1px solid #cbd8e8;border-radius:9px;padding:10px;background:white;color:#19365a;font-weight:600;font-size:13px}button.active{background:#dbeafe;border:2px solid #2563eb}.swatches{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0}.sw{width:29px;height:29px;padding:0;border:2px solid white!important;outline:1px solid #cbd5e1;border-radius:8px}.sw.active{outline:3px solid #2563eb!important}h3{font-size:15px;margin:0 0 10px}.muted{color:#64748b;font-size:12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.stat{background:#edf3fa;padding:10px;border-radius:9px;text-align:center}.stat b{font-size:20px;display:block}.status{font-size:12px;color:#475569;min-height:18px;margin-top:9px}.result{background:#f0f7ff;padding:10px;border-radius:9px;font-size:13px;line-height:1.5}.danger{color:#a12a2a}@media(min-width:700px){.layout{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}.scene{height:390px}}
-</style></head><body>
-<header>🧊 3D Cube Lab <small>Cut • Divide • Paint • Erase • Reassemble • Exam Solver</small></header>
-<div class="wrap"><div class="layout"><section>
-<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>3D Workspace</h3><span id="mode" class="muted">Paint mode</span></div><div class="scene" id="scene"><div id="cube" class="cube"></div></div><div class="row" style="margin-top:10px"><button id="rotate">⟳ Rotate</button><button id="gridbtn" class="active">▦ Grid on</button><button id="separate">↔ Separate</button></div><div class="muted" style="margin-top:8px">Tap visible tiles to paint or erase. Use Rotate to inspect the three visible faces.</div></div>
-<div class="stats"><div class="stat"><b id="total">64</b><span class="muted">Small cubes</span></div><div class="stat"><b id="painted">0</b><span class="muted">Painted tiles</span></div><div class="stat"><b id="visible">3</b><span class="muted">Visible faces</span></div></div>
-<div class="panel"><h3>Exam counting result</h3><div id="answer" class="result">Choose a counting option. For exact classic results, select “Paint all 6 faces” first.</div></div>
-</section><section>
-<div class="panel"><h3>1. Cube settings</h3><label class="muted" for="size">Small cubes along each edge</label><select id="size" style="width:100%;margin-top:7px"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><div class="muted" style="margin-top:7px">Changing size resets paint and cut settings.</div></div>
-<div class="panel"><h3>2. Cut and divide</h3><div class="grid2"><button id="cut">✂ Toggle cut plane</button><button id="divide">▦ Divide into cubes</button></div><div class="muted" style="margin-top:8px">Cut plane is a visual guide; the current starter build does not yet create independently draggable solid pieces.</div></div>
-<div class="panel"><h3>3. Paint tools</h3><div id="swatches" class="swatches"></div><div class="grid2"><button id="paint" class="active">🖌 Paint</button><button id="erase">◩ Erase</button><button id="clear">Clear all paint</button><button id="edit">Edit mode</button></div></div>
-<div class="panel"><h3>4. Reassemble</h3><button id="join" style="width:100%">⬡ Reassemble cube</button><div class="muted" style="margin-top:7px">Returns to the compact view and keeps paint.</div></div>
-<div class="panel"><h3>5. Exam solver</h3><div class="grid2"><button id="all6">Paint all 6 faces</button><button id="count">Count painted faces</button><button id="one">Exactly 1 face</button><button id="two">Exactly 2 faces</button><button id="three">Exactly 3 faces</button><button id="zero">0 faces painted</button></div><div class="muted" style="margin-top:8px">The classic formulas apply when all six outer faces are painted before equal division.</div></div>
-<div class="panel"><h3>Activity</h3><div id="log" class="status">Cube created: 4 × 4 × 4.</div><button id="reset" style="margin-top:8px;width:100%">↺ Reset everything</button></div>
-</section></div><p class="muted">3D Cube Lab • Offline starter prototype. This is a first build, not yet a complete physics-grade cutting simulator.</p></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>3D Cube Lab - Pro Exam Solver</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --accent: #2563eb;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 30px;
+    }
+    header {
+      background: #0f2537;
+      color: #fff;
+      padding: 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+    header p { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+
+    .container { max-width: 500px; margin: 0 auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; background: #eff6ff; color: var(--accent); font-weight: 600; }
+
+    /* 3D Viewport */
+    .viewport {
+      width: 100%;
+      height: 310px;
+      background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
+      border-radius: 12px;
+      border: 1px solid #cbd5e1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 900px;
+      touch-action: none;
+    }
+    .scene {
+      width: 0;
+      height: 0;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.05s linear;
+    }
+    .cubie {
+      position: absolute;
+      transform-style: preserve-3d;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    }
+    .cubie.dimmed { opacity: 0.12; }
+    .cubie.highlighted .face { box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.9); }
+
+    .face {
+      position: absolute;
+      background: #e2e8f0;
+      border: 1.5px solid #334155;
+      backface-visibility: hidden;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .no-grid .face { border-color: transparent; }
+    .cut-lines .face { border: 2px dashed #dc2626; }
+
+    /* Controls & Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    button {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    button:active { transform: scale(0.97); }
+    button.active {
+      background: #eff6ff;
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .stat-box { background: #fff; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--border); }
+    .stat-val { font-size: 18px; font-weight: 800; color: var(--text); }
+    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Exam Result Box */
+    .result-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      color: #1e3a8a;
+      line-height: 1.5;
+    }
+    .formula-tag {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 8px;
+      background: #dbeafe;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    /* Select Dropdown */
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 14px;
+      font-weight: 600;
+      background: #fff;
+      margin-top: 6px;
+    }
+
+    /* Color Swatches */
+    .palette { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .swatch {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid rgba(0,0,0,0.15);
+      transition: transform 0.15s;
+    }
+    .swatch.selected {
+      transform: scale(1.12);
+      border: 3px solid var(--accent);
+      box-shadow: 0 2px 6px rgba(37,99,235,0.35);
+    }
+    .solver-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧊 3D Cube Lab</h1>
+  <p>Cut • Divide • Paint • Erase • Reassemble • Exam Solver</p>
+</header>
+
+<div class="container">
+
+  <!-- 3D Workspace -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">3D Workspace</span>
+      <span class="badge" id="modeBadge">Rotate mode (Drag Cube)</span>
+    </div>
+
+    <div class="viewport" id="viewport">
+      <div class="scene" id="scene"></div>
+    </div>
+
+    <div class="btn-row">
+      <button id="btnRotateMode" class="active" onclick="setInteraction('rotate')">🔄 Rotate</button>
+      <button id="btnGrid" class="active" onclick="toggleGrid()">⊞ Grid on</button>
+      <button id="btnSeparate" onclick="toggleSeparate()">↔ Separate</button>
+    </div>
+    <p class="hint">Drag anywhere on the cube to rotate 360° in 3D. Switch to Paint mode below to color individual tiles.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-val" id="statTotal">64</div>
+      <div class="stat-lbl">Small cubes (n³)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statPainted">0</div>
+      <div class="stat-lbl">Painted tiles</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statHighlighted">64</div>
+      <div class="stat-lbl">Highlighted cubes</div>
+    </div>
+  </div>
+
+  <!-- Exam Counting Result -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:8px;">Exam counting result</div>
+    <div class="result-box" id="examResult">
+      Choose a counting option in <b>5. Exam solver</b> below. Select <b>"Paint all 6 faces"</b> first for classic exam questions!
+    </div>
+  </div>
+
+  <!-- 1. Cube Settings -->
+  <div class="card">
+    <div class="card-title">1. Cube settings</div>
+    <p class="hint" style="margin-top:2px;">Small cubes along each edge (n)</p>
+    <select id="cubeSizeSelect" onchange="changeCubeSize(this.value)">
+      <option value="2">2 × 2 × 2 (8 cubes)</option>
+      <option value="3">3 × 3 × 3 (27 cubes)</option>
+      <option value="4" selected>4 × 4 × 4 (64 cubes)</option>
+      <option value="5">5 × 5 × 5 (125 cubes)</option>
+    </select>
+  </div>
+
+  <!-- 2. Cut and divide -->
+  <div class="card">
+    <div class="card-title">2. Cut and divide</div>
+    <div class="btn-row">
+      <button id="btnCutPlane" onclick="toggleCutLines()">✂️ Toggle cut lines</button>
+      <button id="btnDivide" onclick="divideCubes()">🧊 Divide into cubes</button>
+    </div>
+    <p class="hint">Dividing expands the 3D cube so you can clearly see inner unpainted cubes and edge pieces.</p>
+  </div>
+
+  <!-- 3. Paint tools -->
+  <div class="card">
+    <div class="card-title">3. Paint tools</div>
+    <div class="palette" id="palette"></div>
+    <div class="btn-row">
+      <button id="btnPaintMode" onclick="setInteraction('paint')">🖌️ Paint Tiles</button>
+      <button id="btnEraseMode" onclick="setInteraction('erase')">🧹 Erase Tile</button>
+    </div>
+    <div class="btn-row">
+      <button onclick="paintWholeFaceMenu()">🎨 Paint Full Face</button>
+      <button onclick="clearAllPaint()">🗑️ Clear all paint</button>
+    </div>
+  </div>
+
+  <!-- 4. Reassemble -->
+  <div class="card">
+    <div class="card-title">4. Reassemble</div>
+    <div class="btn-row">
+      <button onclick="reassembleCube()">🔄 Reassemble compact cube & show all</button>
+    </div>
+  </div>
+
+  <!-- 5. Exam solver -->
+  <div class="card">
+    <div class="card-title">5. Exam solver (Interactive Highlight)</div>
+    <div class="solver-grid">
+      <button onclick="paintAllSixFaces()">🎨 Paint all 6 faces</button>
+      <button onclick="countAllPaintedSummary()">📊 Full Summary</button>
+      <button id="sol1" onclick="filterByPaintedFaces(1)">1️⃣ Exactly 1 face</button>
+      <button id="sol2" onclick="filterByPaintedFaces(2)">2️⃣ Exactly 2 faces</button>
+      <button id="sol3" onclick="filterByPaintedFaces(3)">3️⃣ Exactly 3 faces</button>
+      <button id="sol0" onclick="filterByPaintedFaces(0)">0️⃣ 0 faces (Inner)</button>
+    </div>
+    <p class="hint">Tap any option above to highlight those exact small cubes in 3D and see the competitive exam formula!</p>
+  </div>
+
+  <!-- Reset -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:6px;">Activity & Reset</div>
+    <p class="hint" id="activityLog" style="margin-bottom:10px;">Ready. Drag the 3D cube to inspect all 6 sides.</p>
+    <button onclick="resetEverything()">🔄 Reset everything</button>
+  </div>
+
+</div>
+
 <script>
-(()=>{'use strict';
-const $=id=>document.getElementById(id);let n=4,color='#facc15',tool='paint',grid=true,cut=false,separated=false,angle=0,paint={},history='Cube created: 4 × 4 × 4.';
-const palette=[['Red','#ef4444'],['Yellow','#facc15'],['Blue','#1677f2'],['Green','#16a34a'],['Orange','#f97316'],['Purple','#7c3aed'],['Black','#20252e'],['White','#ffffff'],['Grey','#94a3b8'],['Cyan','#06b6d4'],['Pink','#ec4899'],['Brown','#854d36']];
-palette.forEach(([name,c])=>{let b=document.createElement('button');b.className='sw'+(c===color?' active':'');b.style.background=c;b.title=name;b.onclick=()=>{color=c;document.querySelectorAll('.sw').forEach(x=>x.classList.remove('active'));b.classList.add('active');setTool('paint')};$('swatches').appendChild(b)});
-const key=(f,i,j)=>f+':'+i+':'+j;
-function setTool(t){tool=t;['paint','erase','edit'].forEach(x=>$(x).classList.toggle('active',x===t));$('mode').textContent=t==='paint'?'Paint mode':t==='erase'?'Erase mode':'Edit mode'}
-function log(s){history=s;$('log').textContent=s}
-function render(){let cube=$('cube'),size=Math.min(210,Math.floor(270/n));cube.innerHTML='';cube.style.width=size+'px';cube.style.height=size+'px';cube.style.setProperty('--n',n);cube.style.transform='rotateX(-25deg) rotateY('+(-35+angle)+'deg)';let faces=[['front','translateZ('+size/2+'px)','#dce6f2'],['right','rotateY(90deg) translateZ('+size/2+'px)','#bccde0'],['top','rotateX(90deg) translateZ('+size/2+'px)','#f0f4fa']];faces.forEach(([f,tr,base])=>{let face=document.createElement('div');face.className='face';face.style.width=size+'px';face.style.height=size+'px';face.style.gridTemplateColumns='repeat('+n+',1fr)';face.style.gridTemplateRows='repeat('+n+',1fr)';face.style.transform=tr;for(let i=0;i<n;i++)for(let j=0;j<n;j++){let tile=document.createElement('div');tile.className='tile';tile.style.background=paint[key(f,i,j)]||base;tile.style.borderColor=grid?'#334155':'transparent';tile.style.borderWidth=grid?'1px':'0';tile.title=f+' face, row '+(i+1)+', column '+(j+1);tile.onclick=()=>{if(tool==='paint'){paint[key(f,i,j)]=color;log('Painted '+f+' face tile.')}else if(tool==='erase'){delete paint[key(f,i,j)];log('Erased '+f+' face tile.')}else{log('Choose Paint or Erase to change tiles.');return}render()};face.appendChild(tile)}cube.appendChild(face)});if(cut){let line=document.createElement('div');line.style.cssText='position:absolute;left:50%;top:-4%;height:108%;width:3px;background:#dc2626;transform:translateX(-50%) rotateY(35deg);pointer-events:none';cube.appendChild(line)}if(separated)cube.style.transform+=' translateX(10px)';$('total').textContent=n**3;$('painted').textContent=Object.keys(paint).length;$('gridbtn').textContent=grid?'▦ Grid on':'▦ Grid off';$('gridbtn').classList.toggle('active',grid);$('separate').classList.toggle('active',separated)}
-function classic(){let total=n**3,three=n>=2?8:0,two=n>=2?12*(n-2):0,one=n>=2?6*(n-2)**2:0,zero=n>=2?(n-2)**3:0;return {total,three,two,one,zero}}
-$('size').onchange=()=>{n=+$('size').value;paint={};cut=false;separated=false;render();log('Created '+n+' × '+n+' × '+n+' cube.');$('answer').textContent='Cube resized. Choose a counting option.'};
-$('rotate').onclick=()=>{angle=(angle+45)%360;render()};$('gridbtn').onclick=()=>{grid=!grid;render()};$('separate').onclick=()=>{separated=!separated;render();log(separated?'Separation preview enabled.':'Separation preview disabled.')};$('cut').onclick=()=>{cut=!cut;render();log(cut?'Visual cutting plane shown.':'Cutting plane hidden.')};$('divide').onclick=()=>{grid=true;separated=true;render();log('Division preview: '+n**3+' small cubes.')};$('paint').onclick=()=>setTool('paint');$('erase').onclick=()=>setTool('erase');$('edit').onclick=()=>setTool('edit');$('clear').onclick=()=>{paint={};render();log('All paint erased.')};$('join').onclick=()=>{separated=false;cut=false;render();log('Reassembled view restored; paint retained.')};
-$('all6').onclick=()=>{paint={};for(let i=0;i<n;i++)for(let j=0;j<n;j++)for(let f of ['front','right','top'])paint[key(f,i,j)]='#ef4444';render();let c=classic();$('answer').textContent='Classic 6-face painted cube ('+n+'×'+n+'×'+n+'): 3 painted faces = '+c.three+'; 2 = '+c.two+'; 1 = '+c.one+'; 0 = '+c.zero+'. The visual paint preview colours three visible faces; classic counts assume all six faces painted.';log('Classic all-six-faces exam setup selected.')};
-$('count').onclick=()=>{$('answer').textContent='Painted visible tiles: '+Object.keys(paint).length+'. This is a tile count, not a unique-small-cube category count. For the classic all-six-faces setup, use the category buttons below.'};
-const c=()=>classic();$('one').onclick=()=>{$('answer').textContent='Exactly 1 painted face (all six outer faces painted): '+c().one+' cubes.'};$('two').onclick=()=>{$('answer').textContent='Exactly 2 painted faces (all six outer faces painted): '+c().two+' cubes.'};$('three').onclick=()=>{$('answer').textContent='Exactly 3 painted faces (all six outer faces painted): '+c().three+' cubes.'};$('zero').onclick=()=>{$('answer').textContent='0 painted faces (all six outer faces painted): '+c().zero+' cubes.'};
-$('reset').onclick=()=>{n=4;color='#facc15';tool='paint';grid=true;cut=false;separated=false;angle=0;paint={};$('size').value='4';document.querySelectorAll('.sw').forEach((b,i)=>b.classList.toggle('active',palette[i][1]===color));setTool('paint');render();log('Reset complete.');$('answer').textContent='Choose a counting option. For exact classic results, select “Paint all 6 faces” first.'};
-render();
-})();
-</script></body></html>
+  const COLORS = [
+    '#ef4444', '#facc15', '#3b82f6', '#22c55e',
+    '#f97316', '#a855f7', '#1e293b', '#ffffff',
+    '#94a3b8', '#06b6d4', '#ec4899', '#78350f'
+  ];
+  const UNPAINTED = '#e2e8f0';
+
+  let N = 4;
+  let selectedColor = COLORS[0];
+  let interactionMode = 'rotate'; // 'rotate' | 'paint' | 'erase'
+  let isSeparated = false;
+  let showGrid = true;
+  let showCutLines = false;
+
+  // 3D Rotation state
+  let rotX = -25;
+  let rotY = -38;
+  let isDragging = false;
+  let lastX = 0, lastY = 0;
+
+  // Cubie data store
+  let cubies = [];
+
+  const scene = document.getElementById('scene');
+  const viewport = document.getElementById('viewport');
+
+  // Initialize Palette
+  const paletteEl = document.getElementById('palette');
+  COLORS.forEach((col, idx) => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (idx === 0 ? ' selected' : '');
+    sw.style.backgroundColor = col;
+    sw.onclick = () => {
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      selectedColor = col;
+      setInteraction('paint');
+    };
+    paletteEl.appendChild(sw);
+  });
+
+  function buildCube() {
+    scene.innerHTML = '';
+    cubies = [];
+    const cubieSize = Math.floor(150 / N);
+    const offset = (N - 1) / 2;
+
+    for (let x = 0; x < N; x++) {
+      for (let y = 0; y < N; y++) {
+        for (let z = 0; z < N; z++) {
+          const el = document.createElement('div');
+          el.className = 'cubie';
+          el.style.width = cubieSize + 'px';
+          el.style.height = cubieSize + 'px';
+          el.style.marginLeft = (-cubieSize / 2) + 'px';
+          el.style.marginTop = (-cubieSize / 2) + 'px';
+
+          const cubieObj = {
+            x, y, z, el, size: cubieSize,
+            faces: {} // dir -> { el, painted, color }
+          };
+
+          const half = cubieSize / 2;
+          const dirs = [
+            { name: 'PZ', tr: `translateZ(${half}px)`, isOuter: z === N - 1 },
+            { name: 'NZ', tr: `rotateY(180deg) translateZ(${half}px)`, isOuter: z === 0 },
+            { name: 'PX', tr: `rotateY(90deg) translateZ(${half}px)`, isOuter: x === N - 1 },
+            { name: 'NX', tr: `rotateY(-90deg) translateZ(${half}px)`, isOuter: x === 0 },
+            { name: 'PY', tr: `rotateX(90deg) translateZ(${half}px)`, isOuter: y === 0 },
+            { name: 'NY', tr: `rotateX(-90deg) translateZ(${half}px)`, isOuter: y === N - 1 }
+          ];
+
+          dirs.forEach(d => {
+            const f = document.createElement('div');
+            f.className = 'face';
+            f.style.width = cubieSize + 'px';
+            f.style.height = cubieSize + 'px';
+            f.style.transform = d.tr;
+
+            const faceData = { el: f, painted: false, color: UNPAINTED, isOuter: d.isOuter };
+            cubieObj.faces[d.name] = faceData;
+
+            f.addEventListener('pointerdown', (e) => {
+              if (interactionMode === 'paint' || interactionMode === 'erase') {
+                e.stopPropagation();
+                handleTileTap(faceData);
+              }
+            });
+
+            el.appendChild(f);
+          });
+
+          scene.appendChild(el);
+          cubies.push(cubieObj);
+        }
+      }
+    }
+    updateCubiePositions();
+    updateSceneRotation();
+    updateStats();
+  }
+
+  function updateCubiePositions() {
+    const gap = isSeparated ? 1.48 : 1.0;
+    const offset = (N - 1) / 2;
+    cubies.forEach(c => {
+      const tx = (c.x - offset) * c.size * gap;
+      const ty = (c.y - offset) * c.size * gap;
+      const tz = (c.z - offset) * c.size * gap;
+      c.el.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px)`;
+    });
+  }
+
+  function updateSceneRotation() {
+    scene.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+  }
+
+  // Touch / Mouse 3D Rotation
+  viewport.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    rotY += dx * 0.65;
+    rotX -= dy * 0.65;
+    rotX = Math.max(-85, Math.min(85, rotX));
+    updateSceneRotation();
+  });
+
+  window.addEventListener('pointerup', () => { isDragging = false; });
+
+  function handleTileTap(faceData) {
+    if (interactionMode === 'paint') {
+      faceData.painted = true;
+      faceData.color = selectedColor;
+      faceData.el.style.backgroundColor = selectedColor;
+      logActivity('Painted tile.');
+    } else if (interactionMode === 'erase') {
+      faceData.painted = false;
+      faceData.color = UNPAINTED;
+      faceData.el.style.backgroundColor = UNPAINTED;
+      logActivity('Erased tile.');
+    }
+    clearHighlightFilter();
+    updateStats();
+  }
+
+  function setInteraction(mode) {
+    interactionMode = mode;
+    document.getElementById('btnRotateMode').classList.toggle('active', mode === 'rotate');
+    document.getElementById('btnPaintMode').classList.toggle('active', mode === 'paint');
+    document.getElementById('btnEraseMode').classList.toggle('active', mode === 'erase');
+
+    const badge = document.getElementById('modeBadge');
+    if (mode === 'rotate') badge.textContent = 'Rotate mode (Drag 3D)';
+    if (mode === 'paint') badge.textContent = 'Paint mode (Tap tiles)';
+    if (mode === 'erase') badge.textContent = 'Erase mode (Tap tiles)';
+  }
+
+  function toggleGrid() {
+    showGrid = !showGrid;
+    scene.classList.toggle('no-grid', !showGrid);
+    const btn = document.getElementById('btnGrid');
+    btn.classList.toggle('active', showGrid);
+    btn.textContent = showGrid ? '⊞ Grid on' : '⊞ Grid off';
+  }
+
+  function toggleSeparate() {
+    isSeparated = !isSeparated;
+    document.getElementById('btnSeparate').classList.toggle('active', isSeparated);
+    document.getElementById('btnDivide').classList.toggle('active', isSeparated);
+    updateCubiePositions();
+    logActivity(isSeparated ? 'Separated into ' + (N*N*N) + ' small cubes.' : 'Reassembled cube.');
+  }
+
+  function divideCubes() {
+    if (!isSeparated) toggleSeparate();
+  }
+
+  function toggleCutLines() {
+    showCutLines = !showCutLines;
+    scene.classList.toggle('cut-lines', showCutLines);
+    document.getElementById('btnCutPlane').classList.toggle('active', showCutLines);
+    logActivity(showCutLines ? `Showing ${N-1} cut lines per axis (Total ${3*(N-1)} cuts).` : 'Cut lines hidden.');
+  }
+
+  function paintAllSixFaces() {
+    cubies.forEach(c => {
+      Object.values(c.faces).forEach(f => {
+        if (f.isOuter) {
+          f.painted = true;
+          f.color = selectedColor;
+          f.el.style.backgroundColor = selectedColor;
+        } else {
+          f.painted = false;
+          f.color = UNPAINTED;
+          f.el.style.backgroundColor = UNPAINTED;
+        }
+      });
+    });
+    clearHighlightFilter();
+    updateStats();
+    countAllPaintedSummary();
+    logActivity('Painted all 6 outer faces.');
+  }
+
+  function paintWholeFaceMenu() {
+    paintAllSixFaces();
+  }
+
+  function clearAllPaint() {
+    cubies.forEach(c => {
+      Object.values(c.faces).forEach(f => {
+        f.painted = false;
+        f.color = UNPAINTED;
+        f.el.style.backgroundColor = UNPAINTED;
+      });
+    });
+    clearHighlightFilter();
+    updateStats();
+    document.getElementById('examResult').innerHTML = 'All paint cleared. Tap <b>"Paint all 6 faces"</b> or paint custom tiles.';
+    logActivity('Cleared all painted tiles.');
+  }
+
+  function reassembleCube() {
+    isSeparated = false;
+    document.getElementById('btnSeparate').classList.remove('active');
+    document.getElementById('btnDivide').classList.remove('active');
+    clearHighlightFilter();
+    updateCubiePositions();
+    logActivity('Reassembled cube to compact view.');
+  }
+
+  function clearHighlightFilter() {
+    ['sol0','sol1','sol2','sol3'].forEach(id => document.getElementById(id).classList.remove('active'));
+    cubies.forEach(c => {
+      c.el.classList.remove('dimmed', 'highlighted');
+    });
+    document.getElementById('statHighlighted').textContent = cubies.length;
+  }
+
+  function getPaintedCountForCubie(c) {
+    return Object.values(c.faces).filter(f => f.painted).length;
+  }
+
+  function filterByPaintedFaces(targetCount) {
+    ['sol0','sol1','sol2','sol3'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById('sol' + targetCount).classList.add('active');
+
+    if (targetCount === 0 && !isSeparated) {
+      toggleSeparate(); // Auto-separate so user can see inner unpainted cubes!
+    }
+
+    let matched = 0;
+    cubies.forEach(c => {
+      const cnt = getPaintedCountForCubie(c);
+      if (cnt === targetCount) {
+        c.el.classList.remove('dimmed');
+        c.el.classList.add('highlighted');
+        matched++;
+      } else {
+        c.el.classList.add('dimmed');
+        c.el.classList.remove('highlighted');
+      }
+    });
+
+    document.getElementById('statHighlighted').textContent = matched;
+
+    const formulas = {
+      3: { title: 'Exactly 3 faces painted (Corner Cubes)', formula: 'Always = 8 (for n ≥ 2)' },
+      2: { title: 'Exactly 2 faces painted (Middle Edge Cubes)', formula: `12(n - 2) = 12(${N} - 2) = ${12 * Math.max(0, N - 2)}` },
+      1: { title: 'Exactly 1 face painted (Center Face Cubes)', formula: `6(n - 2)² = 6(${N} - 2)² = ${6 * Math.pow(Math.max(0, N - 2), 2)}` },
+      0: { title: '0 faces painted (Inner Hidden Cubes)', formula: `(n - 2)³ = (${N} - 2)³ = ${Math.pow(Math.max(0, N - 2), 3)}` }
+    };
+
+    const info = formulas[targetCount];
+    document.getElementById('examResult').innerHTML = `
+      <b>${info.title}:</b> Found <b>${matched}</b> cubes.<br>
+      <span class="formula-tag">Standard Formula: ${info.formula}</span>
+    `;
+    logActivity(`Highlighted ${matched} cubes with ${targetCount} painted face(s).`);
+  }
+
+  function countAllPaintedSummary() {
+    clearHighlightFilter();
+    let counts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+    cubies.forEach(c => {
+      const cnt = Math.min(3, getPaintedCountForCubie(c));
+      counts[cnt]++;
+    });
+    document.getElementById('examResult').innerHTML = `
+      <b>Cube (${N}×${N}×${N} = ${N*N*N}) Current Breakdown:</b><br>
+      • <b>3 Faces Painted
